@@ -29,7 +29,7 @@ public class TariffEntity {
     private OffsetDateTime endDate;
     @Column(name = "description")
     private String description;
-    @Column(name = "product", unique = true)
+    @Column(name = "product")
     private UUID product;
     @Version
     @Column(name = "version", nullable = false)
