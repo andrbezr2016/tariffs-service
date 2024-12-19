@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS tariffs (
 CREATE TABLE IF NOT EXISTS notifications (
     id bigserial PRIMARY KEY,
     tariff uuid,
-    version bigint,
+    tariff_version bigint,
     product uuid NOT NULL,
     processed_date timestamptz
 );

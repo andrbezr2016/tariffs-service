@@ -4,6 +4,7 @@ import com.andrbezr2016.tariffs.dto.Tariff;
 import com.andrbezr2016.tariffs.dto.TariffRequest;
 import com.andrbezr2016.tariffs.entity.ProductNotificationEntity;
 import com.andrbezr2016.tariffs.entity.TariffEntity;
+import com.andrbezr2016.tariffs.entity.TariffId;
 import com.andrbezr2016.tariffs.mapper.TariffMapper;
 import com.andrbezr2016.tariffs.repository.ProductNotificationRepository;
 import com.andrbezr2016.tariffs.repository.TariffRepository;
@@ -23,8 +24,16 @@ public class TariffService {
     private final ProductNotificationRepository productNotificationRepository;
     private final TariffMapper tariffMapper;
 
-    public Tariff getCurrentVersion(UUID id) {
-        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+    public Tariff getTariff(UUID id, Long version) {
+        TariffEntity tariffEntity;
+        if (version == null) {
+            tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        } else {
+            TariffId tariffId = new TariffId();
+            tariffId.setId(id);
+            tariffId.setVersion(version);
+            tariffEntity = tariffRepository.findById(tariffId).orElse(null);
+        }
         return tariffMapper.toDto(tariffEntity);
     }
 
@@ -73,7 +82,7 @@ public class TariffService {
             ProductNotificationEntity productNotificationEntity = new ProductNotificationEntity();
             if (!deleted) {
                 productNotificationEntity.setTariff(tariffEntity.getId());
-                productNotificationEntity.setVersion(tariffEntity.getVersion());
+                productNotificationEntity.setTariffVersion(tariffEntity.getVersion());
             }
             productNotificationEntity.setProduct(tariffEntity.getProduct());
             productNotificationRepository.save(productNotificationEntity);

@@ -18,9 +18,9 @@ public class TariffController {
     private final TariffService tariffService;
 
     @GetMapping("/{id}")
-    public Tariff getCurrentVersion(@PathVariable("id") UUID id) {
-        log.info("Get tariff by id: {}", id);
-        return tariffService.getCurrentVersion(id);
+    public Tariff getTariff(@PathVariable("id") UUID id, @RequestParam(value = "version", required = false) Long version) {
+        log.info("Get tariff by id: {} and version: {}", id, version);
+        return tariffService.getTariff(id, version);
     }
 
     @PostMapping("/create")

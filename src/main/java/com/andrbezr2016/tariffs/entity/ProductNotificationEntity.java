@@ -21,8 +21,8 @@ public class ProductNotificationEntity {
     Long id;
     @Column(name = "tariff")
     UUID tariff;
-    @Column(name = "version")
-    Long version;
+    @Column(name = "tariff_version")
+    Long tariffVersion;
     @Column(name = "product", nullable = false)
     UUID product;
     @Column(name = "processed_date")
