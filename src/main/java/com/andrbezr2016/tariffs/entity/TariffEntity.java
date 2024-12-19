@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.envers.Audited;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -12,8 +11,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @Setter
 @Getter
-@Audited
 @Entity
+@IdClass(TariffId.class)
 @Table(name = "tariffs")
 public class TariffEntity {
 
@@ -31,7 +30,7 @@ public class TariffEntity {
     private String description;
     @Column(name = "product")
     private UUID product;
-    @Version
+    @Id
     @Column(name = "version", nullable = false)
     private Long version;
 }

@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -23,19 +23,15 @@ public class TariffService {
     private final ProductNotificationRepository productNotificationRepository;
     private final TariffMapper tariffMapper;
 
-    public Tariff getTariff(UUID id) {
-        TariffEntity tariffEntity = tariffRepository.findById(id).orElse(null);
+    public Tariff getCurrentVersion(UUID id) {
+        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         return tariffMapper.toDto(tariffEntity);
-    }
-
-    public Collection<Tariff> getTariffs(Collection<UUID> ids) {
-        Collection<TariffEntity> tariffEntityList = tariffRepository.findAllById(ids);
-        return tariffMapper.toDtoCollection(tariffEntityList);
     }
 
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
+        tariffEntity.setStartDate(OffsetDateTime.now());
         tariffEntity = tariffRepository.save(tariffEntity);
         fillNotification(tariffEntity, false);
         return tariffMapper.toDto(tariffEntity);
@@ -43,14 +39,20 @@ public class TariffService {
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
-        TariffEntity tariffEntity = tariffRepository.findById(id).orElse(null);
+        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         if (tariffEntity != null) {
+            OffsetDateTime now = OffsetDateTime.now();
+            tariffEntity.setEndDate(now);
+            tariffEntity = tariffRepository.save(tariffEntity);
             if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
                 fillNotification(tariffEntity, true);
             }
             tariffEntity.setName(tariffRequest.getName());
             tariffEntity.setDescription(tariffRequest.getDescription());
             tariffEntity.setProduct(tariffRequest.getProduct());
+            tariffEntity.setStartDate(now);
+            tariffEntity.setEndDate(null);
+            tariffEntity.setVersion(tariffEntity.getVersion() + 1);
             tariffEntity = tariffRepository.save(tariffEntity);
             fillNotification(tariffEntity, false);
         }
@@ -59,9 +61,11 @@ public class TariffService {
 
     @Transactional
     public void deleteTariff(UUID id) {
-        TariffEntity tariffEntity = tariffRepository.findById(id).orElse(null);
-        fillNotification(tariffEntity, true);
-        tariffRepository.deleteById(id);
+        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        if (tariffEntity != null) {
+            fillNotification(tariffEntity, true);
+            tariffRepository.deleteAllVersionsById(id);
+        }
     }
 
     private void fillNotification(TariffEntity tariffEntity, boolean deleted) {
