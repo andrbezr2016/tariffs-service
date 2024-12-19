@@ -19,9 +19,9 @@ public class ProductNotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     Long id;
-    @Column(name = "tariff", nullable = false)
+    @Column(name = "tariff")
     UUID tariff;
-    @Column(name = "version", nullable = false)
+    @Column(name = "version")
     Long version;
     @Column(name = "product", nullable = false)
     UUID product;

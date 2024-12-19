@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -44,6 +45,9 @@ public class TariffService {
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffRepository.findById(id).orElse(null);
         if (tariffEntity != null) {
+            if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
+                fillNotification(tariffEntity, true);
+            }
             tariffEntity.setName(tariffRequest.getName());
             tariffEntity.setDescription(tariffRequest.getDescription());
             tariffEntity.setProduct(tariffRequest.getProduct());

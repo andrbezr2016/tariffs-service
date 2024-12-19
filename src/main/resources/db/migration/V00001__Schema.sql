@@ -31,8 +31,8 @@ ALTER SEQUENCE IF EXISTS revinfo_seq INCREMENT 50;
 
 CREATE TABLE IF NOT EXISTS notifications (
     id bigserial PRIMARY KEY,
-    tariff uuid NOT NULL,
-    version bigint NOT NULL DEFAULT 0,
+    tariff uuid,
+    version bigint,
     product uuid NOT NULL,
     processed_date timestamptz
 );
