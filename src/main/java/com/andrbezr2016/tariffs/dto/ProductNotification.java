@@ -13,7 +13,7 @@ import java.util.UUID;
 @ToString
 public class ProductNotification {
 
-    UUID tariff;
-    Long tariffVersion;
-    UUID product;
+    private UUID tariff;
+    private Long tariffVersion;
+    private UUID product;
 }

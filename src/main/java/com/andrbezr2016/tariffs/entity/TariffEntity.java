@@ -32,4 +32,6 @@ public class TariffEntity {
     @Id
     @Column(name = "version", nullable = false)
     private Long version;
+    @Column(name = "deleted")
+    private boolean deleted;
 }

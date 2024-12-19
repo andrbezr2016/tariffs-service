@@ -77,8 +77,38 @@ public class TariffService {
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         if (tariffEntity != null) {
-            fillNotification(tariffEntity, true);
-            tariffRepository.deleteAllVersionsById(id);
+            OffsetDateTime now = OffsetDateTime.now();
+            tariffEntity.setEndDate(now);
+            tariffRepository.save(tariffEntity);
+
+            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+            newTariffEntity.setStartDate(now);
+            newTariffEntity.setEndDate(null);
+            newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
+            newTariffEntity.setDeleted(true);
+            tariffRepository.save(newTariffEntity);
+
+            fillNotification(newTariffEntity, true);
+        }
+    }
+
+    @Transactional
+    public void syncTariff(UUID id, Long version) {
+        TariffId tariffId = new TariffId();
+        tariffId.setId(id);
+        tariffId.setVersion(version);
+        TariffEntity tariffEntity = tariffRepository.findById(tariffId).orElse(null);
+        if (tariffEntity != null) {
+            OffsetDateTime now = OffsetDateTime.now();
+            tariffEntity.setEndDate(now);
+            tariffRepository.save(tariffEntity);
+
+            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+            newTariffEntity.setStartDate(now);
+            newTariffEntity.setEndDate(null);
+            newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
+            newTariffEntity.setDeleted(true);
+            tariffRepository.save(newTariffEntity);
         }
     }
 

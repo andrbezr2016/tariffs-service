@@ -18,13 +18,13 @@ public class ProductNotificationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    Long id;
+    private Long id;
     @Column(name = "tariff")
-    UUID tariff;
+    private UUID tariff;
     @Column(name = "tariff_version")
-    Long tariffVersion;
+    private Long tariffVersion;
     @Column(name = "product", nullable = false)
-    UUID product;
+    private UUID product;
     @Column(name = "processed_date")
-    OffsetDateTime processedDate;
+    private OffsetDateTime processedDate;
 }

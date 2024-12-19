@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS tariffs (
     description text,
     product uuid,
     version bigint,
+    deleted boolean,
     PRIMARY KEY (id, version)
 );
 

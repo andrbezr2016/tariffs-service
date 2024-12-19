@@ -40,4 +40,10 @@ public class TariffController {
         log.info("Delete tariff with id: {}", id);
         tariffService.deleteTariff(id);
     }
+
+    @DeleteMapping("/syncTariff")
+    public void syncTariff(@RequestParam("id") UUID id, @RequestParam(value = "version") Long version) {
+        log.info("Sync tariff with id: {} and version: {}", id, version);
+        tariffService.syncTariff(id, version);
+    }
 }
