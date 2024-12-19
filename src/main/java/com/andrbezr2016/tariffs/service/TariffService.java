@@ -40,6 +40,7 @@ public class TariffService {
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
+        tariffEntity.setId(UUID.randomUUID());
         tariffEntity.setStartDate(OffsetDateTime.now());
         tariffEntity.setVersion(0L);
         tariffEntity = tariffRepository.save(tariffEntity);
@@ -50,6 +51,7 @@ public class TariffService {
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        TariffEntity newTariffEntity = null;
         if (tariffEntity != null) {
             OffsetDateTime now = OffsetDateTime.now();
             tariffEntity.setEndDate(now);
@@ -57,16 +59,18 @@ public class TariffService {
             if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
                 fillNotification(tariffEntity, true);
             }
-            tariffEntity.setName(tariffRequest.getName());
-            tariffEntity.setDescription(tariffRequest.getDescription());
-            tariffEntity.setProduct(tariffRequest.getProduct());
-            tariffEntity.setStartDate(now);
-            tariffEntity.setEndDate(null);
-            tariffEntity.setVersion(tariffEntity.getVersion() + 1);
-            tariffEntity = tariffRepository.save(tariffEntity);
-            fillNotification(tariffEntity, false);
+
+            newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+            newTariffEntity.setName(tariffRequest.getName());
+            newTariffEntity.setDescription(tariffRequest.getDescription());
+            newTariffEntity.setProduct(tariffRequest.getProduct());
+            newTariffEntity.setStartDate(now);
+            newTariffEntity.setEndDate(null);
+            newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
+            newTariffEntity = tariffRepository.save(newTariffEntity);
+            fillNotification(newTariffEntity, false);
         }
-        return tariffMapper.toDto(tariffEntity);
+        return tariffMapper.toDto(newTariffEntity);
     }
 
     @Transactional

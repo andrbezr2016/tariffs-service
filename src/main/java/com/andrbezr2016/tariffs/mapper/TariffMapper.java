@@ -15,4 +15,6 @@ public interface TariffMapper {
     TariffEntity toEntity(TariffRequest tariffRequest);
 
     Collection<Tariff> toDtoCollection(Collection<TariffEntity> tariffEntityList);
+
+    TariffEntity copyEntity(TariffEntity tariffEntity);
 }
