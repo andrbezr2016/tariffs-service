@@ -41,6 +41,7 @@ public class TariffService {
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setStartDate(OffsetDateTime.now());
+        tariffEntity.setVersion(0L);
         tariffEntity = tariffRepository.save(tariffEntity);
         fillNotification(tariffEntity, false);
         return tariffMapper.toDto(tariffEntity);
