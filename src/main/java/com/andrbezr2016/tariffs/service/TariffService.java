@@ -52,7 +52,7 @@ public class TariffService {
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         TariffEntity newTariffEntity = null;
-        if (tariffEntity != null) {
+        if (ifActiveTariff(tariffEntity)) {
             OffsetDateTime now = OffsetDateTime.now();
             tariffEntity.setEndDate(now);
             tariffEntity = tariffRepository.save(tariffEntity);
@@ -76,7 +76,7 @@ public class TariffService {
     @Transactional
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
-        if (tariffEntity != null) {
+        if (ifActiveTariff(tariffEntity)) {
             OffsetDateTime now = OffsetDateTime.now();
             tariffEntity.setEndDate(now);
             tariffRepository.save(tariffEntity);
@@ -92,26 +92,6 @@ public class TariffService {
         }
     }
 
-    @Transactional
-    public void syncTariff(UUID id, Long version) {
-        TariffId tariffId = new TariffId();
-        tariffId.setId(id);
-        tariffId.setVersion(version);
-        TariffEntity tariffEntity = tariffRepository.findById(tariffId).orElse(null);
-        if (tariffEntity != null) {
-            OffsetDateTime now = OffsetDateTime.now();
-            tariffEntity.setEndDate(now);
-            tariffRepository.save(tariffEntity);
-
-            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
-            newTariffEntity.setStartDate(now);
-            newTariffEntity.setEndDate(null);
-            newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
-            newTariffEntity.setDeleted(true);
-            tariffRepository.save(newTariffEntity);
-        }
-    }
-
     private void fillNotification(TariffEntity tariffEntity, boolean deleted) {
         if (tariffEntity != null && tariffEntity.getProduct() != null) {
             ProductNotificationEntity productNotificationEntity = new ProductNotificationEntity();
@@ -122,5 +102,9 @@ public class TariffService {
             productNotificationEntity.setProduct(tariffEntity.getProduct());
             productNotificationRepository.save(productNotificationEntity);
         }
+    }
+
+    private boolean ifActiveTariff(TariffEntity tariffEntity) {
+        return tariffEntity != null && !tariffEntity.isDeleted();
     }
 }
