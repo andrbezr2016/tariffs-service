@@ -11,6 +11,6 @@ import java.util.UUID;
 @Repository
 public interface ProductNotificationRepository extends JpaRepository<ProductNotificationEntity, UUID> {
 
-    @Query(value = "FROM ProductNotificationEntity WHERE processedDate IS NULL ORDER BY id ASC")
-    List<ProductNotificationEntity> findAllByProcessedDateIsNull();
+    @Query(value = "FROM ProductNotificationEntity WHERE processedDate IS NULL ORDER BY id ASC LIMIT :limit")
+    List<ProductNotificationEntity> findAllByProcessedDateIsNull(int limit);
 }
