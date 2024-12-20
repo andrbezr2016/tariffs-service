@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -39,7 +40,7 @@ public class TariffService {
         return tariffMapper.toDto(tariffEntity);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
@@ -53,11 +54,11 @@ public class TariffService {
         return tariffMapper.toDto(tariffEntity);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         TariffEntity newTariffEntity = null;
-        if (ifActiveTariff(tariffEntity)) {
+        if (isActiveTariff(tariffEntity)) {
             OffsetDateTime now = OffsetDateTime.now();
             tariffEntity.setEndDate(now);
 
@@ -80,10 +81,10 @@ public class TariffService {
         return tariffMapper.toDto(newTariffEntity);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
-        if (ifActiveTariff(tariffEntity)) {
+        if (isActiveTariff(tariffEntity)) {
             OffsetDateTime now = OffsetDateTime.now();
             tariffEntity.setEndDate(now);
 
@@ -101,7 +102,7 @@ public class TariffService {
     }
 
     private void addUpdateNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
-        if (tariffEntity != null && productNotificationList != null && tariffEntity.getProduct() != null) {
+        if (isNotificationNeeded(tariffEntity)) {
             ProductNotification productNotification = new ProductNotification();
             productNotification.setTariff(tariffEntity.getId());
             productNotification.setTariffVersion(tariffEntity.getVersion());
@@ -111,7 +112,7 @@ public class TariffService {
     }
 
     private void addDeleteNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
-        if (tariffEntity != null && productNotificationList != null && tariffEntity.getProduct() != null) {
+        if (isNotificationNeeded(tariffEntity)) {
             ProductNotification productNotification = new ProductNotification();
             productNotification.setProduct(tariffEntity.getProduct());
             productNotificationList.add(productNotification);
@@ -125,7 +126,11 @@ public class TariffService {
         }
     }
 
-    private boolean ifActiveTariff(TariffEntity tariffEntity) {
+    private boolean isNotificationNeeded(TariffEntity tariffEntity) {
+        return tariffEntity != null && tariffEntity.getProduct() != null;
+    }
+
+    private boolean isActiveTariff(TariffEntity tariffEntity) {
         return tariffEntity != null && !tariffEntity.isDeleted();
     }
 }
