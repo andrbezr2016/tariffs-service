@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collection;
+
 @Component
 public class ProductsServiceClient {
 
@@ -14,7 +16,7 @@ public class ProductsServiceClient {
         this.restTemplate = restTemplate;
     }
 
-    public void syncTariff(ProductNotification productNotification) {
-        restTemplate.postForObject("/product/syncTariff", productNotification, Void.class);
+    public void syncTariff(Collection<ProductNotification> productNotificationCollection) {
+        restTemplate.postForObject("/product/syncTariff", productNotificationCollection, Void.class);
     }
 }

@@ -14,5 +14,3 @@ spring:
 tariffs-service:
   client:
     products-service-url: http://localhost:8081
-  sync:
-    max-number-of-events: 10
