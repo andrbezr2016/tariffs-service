@@ -40,7 +40,7 @@ public class TariffService {
         return tariffMapper.toDto(tariffEntity);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
@@ -54,7 +54,7 @@ public class TariffService {
         return tariffMapper.toDto(tariffEntity);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         TariffEntity newTariffEntity = null;
@@ -81,7 +81,7 @@ public class TariffService {
         return tariffMapper.toDto(newTariffEntity);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         if (isActiveTariff(tariffEntity)) {
