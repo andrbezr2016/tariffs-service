@@ -30,10 +30,10 @@ public class ProductServiceNotificationJob implements Job {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        log.info("Start ProductServiceNotificationJob");
+        log.debug("Start ProductServiceNotificationJob");
         List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProcessedDateIsNull(notificationProperties.getMaxNumberOfEvents());
         for (ProductNotificationEntity productNotificationEntity : productNotificationEntityList) {
-            log.info("Send notification with id: {}", productNotificationEntity.getId());
+            log.info("Send notification with id: {} for product with id: {}", productNotificationEntity.getId(), productNotificationEntity.getProduct());
             productsServiceClient.syncTariff(productNotificationMapper.toDto(productNotificationEntity));
             productNotificationEntity.setProcessedDate(OffsetDateTime.now());
             productNotificationRepository.save(productNotificationEntity);
