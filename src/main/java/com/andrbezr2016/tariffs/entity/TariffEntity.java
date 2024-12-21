@@ -1,37 +1,38 @@
 package com.andrbezr2016.tariffs.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @NoArgsConstructor
 @Setter
 @Getter
+@Audited
 @Entity
-@IdClass(TariffId.class)
 @Table(name = "tariffs")
 public class TariffEntity {
 
     @Id
     @Column(name = "id", nullable = false)
     private UUID id;
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
-    @Column(name = "start_date")
-    private OffsetDateTime startDate;
+    @Column(name = "start_date", nullable = false)
+    private LocalDateTime startDate;
     @Column(name = "end_date")
-    private OffsetDateTime endDate;
+    private LocalDateTime endDate;
     @Column(name = "description")
     private String description;
     @Column(name = "product")
     private UUID product;
-    @Id
     @Column(name = "version", nullable = false)
     private Long version;
-    @Column(name = "deleted")
-    private boolean deleted;
 }

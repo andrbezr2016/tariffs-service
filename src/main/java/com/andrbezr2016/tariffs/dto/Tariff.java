@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Setter
@@ -16,8 +16,8 @@ public class Tariff {
 
     private UUID id;
     private String name;
-    private OffsetDateTime startDate;
-    private OffsetDateTime endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private String description;
     private UUID product;
     private Long version;
