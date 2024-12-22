@@ -31,7 +31,7 @@ public class TariffEntity {
     private LocalDateTime endDate;
     @Column(name = "description")
     private String description;
-    @Column(name = "product")
+    @Column(name = "product", unique = true)
     private UUID product;
     @Column(name = "version", nullable = false)
     private Long version;
