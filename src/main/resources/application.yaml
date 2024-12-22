@@ -11,11 +11,6 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-    properties:
-      org:
-        hibernate:
-          envers:
-            store_data_at_delete: true
 tariffs-service:
   client:
     products-service-url: http://localhost:8081
