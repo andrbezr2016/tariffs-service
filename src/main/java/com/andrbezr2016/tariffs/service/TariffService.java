@@ -28,13 +28,7 @@ public class TariffService {
     private final CurrentDateService currentDateService;
 
     public Tariff getTariff(UUID id, Long version) {
-        TariffEntity tariffEntity;
-        if (version == null) {
-            tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
-        } else {
-            TariffId tariffId = new TariffId(id, version);
-            tariffEntity = tariffRepository.findById(tariffId).orElse(null);
-        }
+        TariffEntity tariffEntity = findTariff(id, version);
         return tariffMapper.toDto(tariffEntity);
     }
 
@@ -42,7 +36,7 @@ public class TariffService {
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
-        tariffEntity.setStartDate(LocalDateTime.now());
+        tariffEntity.setStartDate(currentDateService.getCurrentDate());
         tariffEntity.setVersion(0L);
         tariffEntity = tariffRepository.save(tariffEntity);
 
@@ -54,10 +48,10 @@ public class TariffService {
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
-        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        TariffEntity tariffEntity = findTariff(id);
         TariffEntity newTariffEntity = null;
         if (isActiveTariff(tariffEntity)) {
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
 
             newTariffEntity = tariffMapper.copyEntity(tariffEntity);
@@ -81,9 +75,9 @@ public class TariffService {
 
     @Transactional
     public void deleteTariff(UUID id) {
-        TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        TariffEntity tariffEntity = findTariff(id);
         if (isActiveTariff(tariffEntity)) {
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
 
             TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
@@ -96,6 +90,19 @@ public class TariffService {
             List<ProductNotification> productNotificationList = new LinkedList<>();
             addDeleteNotification(newTariffEntity, productNotificationList);
             sendNotificationToProductService(productNotificationList);
+        }
+    }
+
+    private TariffEntity findTariff(UUID id) {
+        return findTariff(id, null);
+    }
+
+    private TariffEntity findTariff(UUID id, Long version) {
+        if (version == null) {
+            return tariffRepository.findCurrentVersionById(id).orElse(null);
+        } else {
+            TariffId tariffId = new TariffId(id, version);
+            return tariffRepository.findById(tariffId).orElse(null);
         }
     }
 
