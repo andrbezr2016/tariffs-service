@@ -32,7 +32,14 @@ public class TariffService {
     private final LocalDateTimeService localDateTimeService;
 
     public Tariff getTariff(UUID id, Long version) {
-        TariffEntity tariffEntity = findTariff(id, version);
+        TariffEntity tariffEntity;
+        Revision<Long, TariffEntity> revision;
+        if (version == null) {
+            revision = tariffRepository.findLastChangeRevision(id).orElse(null);
+        } else {
+            revision = tariffRepository.findRevisions(id).stream().filter(r -> Objects.equals(r.getEntity().getVersion(), version)).findFirst().orElse(null);
+        }
+        tariffEntity = revision != null ? revision.getEntity() : null;
         return tariffMapper.toDto(tariffEntity);
     }
 
@@ -47,77 +54,54 @@ public class TariffService {
         List<ProductNotification> productNotificationList = new LinkedList<>();
         addUpdateNotification(tariffEntity, productNotificationList);
         sendNotificationToProductService(productNotificationList);
-
         return tariffMapper.toDto(tariffEntity);
     }
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
-        Revision<Long, TariffEntity> revision = findRevision(id);
-        if (revision != null) {
-            TariffAuditId tariffAuditId = new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber());
-            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(tariffAuditId).orElse(null);
+        Revision<Long, TariffEntity> revision = tariffRepository.findLastChangeRevision(id).orElse(null);
+        TariffEntity tariffEntity = revision != null ? revision.getEntity() : null;
+        if (tariffEntity != null) {
+            LocalDateTime currentDate = localDateTimeService.getCurrentDate();
+            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber())).orElse(null);
             if (tariffAuditEntity != null) {
-                LocalDateTime currentDate = localDateTimeService.getCurrentDate();
                 tariffAuditEntity.setEndDate(currentDate);
                 tariffAuditRepository.save(tariffAuditEntity);
-
-                TariffEntity tariffEntity = revision.getEntity();
-                TariffEntity prevTariffEntity = tariffMapper.copyEntity(tariffEntity);
-                tariffEntity.setName(tariffRequest.getName() != null ? tariffRequest.getName() : tariffEntity.getName());
-                tariffEntity.setDescription(tariffRequest.getDescription() != null ? tariffRequest.getDescription() : tariffEntity.getName());
-                tariffEntity.setProduct(tariffRequest.getProduct());
-                tariffEntity.setVersion(tariffEntity.getVersion() + 1);
-                tariffEntity.setStartDate(currentDate);
-                tariffEntity = tariffRepository.save(tariffEntity);
-
-                List<ProductNotification> productNotificationList = new LinkedList<>();
-                if (!Objects.equals(prevTariffEntity.getProduct(), tariffRequest.getProduct())) {
-                    addDeleteNotification(prevTariffEntity, productNotificationList);
-                }
-                addUpdateNotification(tariffEntity, productNotificationList);
-                sendNotificationToProductService(productNotificationList);
-
-                return tariffMapper.toDto(tariffEntity);
             }
+            TariffEntity prevTariffEntity = tariffMapper.copyEntity(tariffEntity);
+            tariffEntity.setName(tariffRequest.getName() != null ? tariffRequest.getName() : tariffEntity.getName());
+            tariffEntity.setDescription(tariffRequest.getDescription() != null ? tariffRequest.getDescription() : tariffEntity.getName());
+            tariffEntity.setProduct(tariffRequest.getProduct());
+            tariffEntity.setVersion(tariffEntity.getVersion() + 1);
+            tariffEntity.setStartDate(currentDate);
+            tariffEntity = tariffRepository.save(tariffEntity);
+
+            List<ProductNotification> productNotificationList = new LinkedList<>();
+            if (!Objects.equals(prevTariffEntity.getProduct(), tariffRequest.getProduct())) {
+                addDeleteNotification(prevTariffEntity, productNotificationList);
+            }
+            addUpdateNotification(tariffEntity, productNotificationList);
+            sendNotificationToProductService(productNotificationList);
         }
-        return null;
+        return tariffMapper.toDto(tariffEntity);
     }
 
     @Transactional
     public void deleteTariff(UUID id) {
-        Revision<Long, TariffEntity> revision = findRevision(id);
-        if (revision != null) {
-            TariffAuditId tariffAuditId = new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber());
-            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(tariffAuditId).orElse(null);
+        Revision<Long, TariffEntity> revision = tariffRepository.findLastChangeRevision(id).orElse(null);
+        TariffEntity tariffEntity = revision != null ? revision.getEntity() : null;
+        if (tariffEntity != null) {
+            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber())).orElse(null);
             if (tariffAuditEntity != null) {
                 tariffAuditEntity.setEndDate(localDateTimeService.getCurrentDate());
                 tariffAuditRepository.save(tariffAuditEntity);
-
-                tariffRepository.deleteById(id);
-
-                List<ProductNotification> productNotificationList = new LinkedList<>();
-                addDeleteNotification(revision.getEntity(), productNotificationList);
-                sendNotificationToProductService(productNotificationList);
             }
+            tariffRepository.deleteById(id);
+
+            List<ProductNotification> productNotificationList = new LinkedList<>();
+            addDeleteNotification(tariffEntity, productNotificationList);
+            sendNotificationToProductService(productNotificationList);
         }
-    }
-
-    private TariffEntity findTariff(UUID id, Long version) {
-        Revision<Long, TariffEntity> revision = findRevision(id, version);
-        return revision != null ? revision.getEntity() : null;
-    }
-
-    private Revision<Long, TariffEntity> findRevision(UUID id, Long version) {
-        if (version == null) {
-            return tariffRepository.findLastChangeRevision(id).orElse(null);
-        } else {
-            return tariffRepository.findRevisions(id).stream().filter(r -> Objects.equals(r.getEntity().getVersion(), version)).findFirst().orElse(null);
-        }
-    }
-
-    private Revision<Long, TariffEntity> findRevision(UUID id) {
-        return findRevision(id, null);
     }
 
     private void addUpdateNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
