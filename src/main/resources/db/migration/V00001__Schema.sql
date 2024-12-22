@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS tariffs (
     start_date timestamp NOT NULL,
     end_date timestamp,
     description text,
-    product uuid UNIQUE,
+    product uuid,
     version bigint NOT NULL,
     PRIMARY KEY (id)
 );

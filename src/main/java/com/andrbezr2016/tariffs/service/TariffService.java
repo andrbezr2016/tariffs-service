@@ -7,8 +7,6 @@ import com.andrbezr2016.tariffs.dto.TariffRequest;
 import com.andrbezr2016.tariffs.entity.TariffAuditEntity;
 import com.andrbezr2016.tariffs.entity.TariffAuditId;
 import com.andrbezr2016.tariffs.entity.TariffEntity;
-import com.andrbezr2016.tariffs.exception.ClientException;
-import com.andrbezr2016.tariffs.exception.ErrorMessage;
 import com.andrbezr2016.tariffs.mapper.TariffMapper;
 import com.andrbezr2016.tariffs.repository.TariffAuditRepository;
 import com.andrbezr2016.tariffs.repository.TariffRepository;
@@ -16,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.history.Revision;
-import org.springframework.data.history.RevisionMetadata;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +38,6 @@ public class TariffService {
 
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
-        checkTariffRequest(tariffRequest);
-
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
         tariffEntity.setVersion(0L);
@@ -58,10 +53,8 @@ public class TariffService {
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
-        checkTariffRequest(tariffRequest);
-
         Revision<Long, TariffEntity> revision = findRevision(id);
-        if (isActiveRevision(revision)) {
+        if (revision != null) {
             TariffAuditId tariffAuditId = new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber());
             TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(tariffAuditId).orElse(null);
             if (tariffAuditEntity != null) {
@@ -94,7 +87,7 @@ public class TariffService {
     @Transactional
     public void deleteTariff(UUID id) {
         Revision<Long, TariffEntity> revision = findRevision(id);
-        if (isActiveRevision(revision)) {
+        if (revision != null) {
             TariffAuditId tariffAuditId = new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber());
             TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(tariffAuditId).orElse(null);
             if (tariffAuditEntity != null) {
@@ -112,7 +105,7 @@ public class TariffService {
 
     private TariffEntity findTariff(UUID id, Long version) {
         Revision<Long, TariffEntity> revision = findRevision(id, version);
-        return isActiveRevision(revision) ? revision.getEntity() : null;
+        return revision != null ? revision.getEntity() : null;
     }
 
     private Revision<Long, TariffEntity> findRevision(UUID id, Long version) {
@@ -125,19 +118,6 @@ public class TariffService {
 
     private Revision<Long, TariffEntity> findRevision(UUID id) {
         return findRevision(id, null);
-    }
-
-    private void checkTariffRequest(TariffRequest tariffRequest) {
-        if (tariffRequest.getProduct() != null) {
-            TariffEntity existedTariffEntity = tariffRepository.findByProduct(tariffRequest.getProduct()).orElse(null);
-            if (existedTariffEntity != null) {
-                throw new ClientException(ErrorMessage.TARIFF_ALREADY_ASSIGNED, existedTariffEntity.getId(), existedTariffEntity.getProduct());
-            }
-        }
-    }
-
-    private boolean isActiveRevision(Revision<Long, TariffEntity> revision) {
-        return revision != null && revision.getMetadata().getRevisionType() != RevisionMetadata.RevisionType.DELETE;
     }
 
     private void addUpdateNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
