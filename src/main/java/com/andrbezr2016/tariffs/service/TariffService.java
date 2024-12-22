@@ -4,11 +4,8 @@ import com.andrbezr2016.tariffs.client.ProductsServiceClient;
 import com.andrbezr2016.tariffs.dto.ProductNotification;
 import com.andrbezr2016.tariffs.dto.Tariff;
 import com.andrbezr2016.tariffs.dto.TariffRequest;
-import com.andrbezr2016.tariffs.entity.TariffAuditEntity;
-import com.andrbezr2016.tariffs.entity.TariffAuditId;
 import com.andrbezr2016.tariffs.entity.TariffEntity;
 import com.andrbezr2016.tariffs.mapper.TariffMapper;
-import com.andrbezr2016.tariffs.repository.TariffAuditRepository;
 import com.andrbezr2016.tariffs.repository.TariffRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +14,6 @@ import org.springframework.data.history.Revision;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -26,7 +22,6 @@ import java.util.*;
 public class TariffService {
 
     private final TariffRepository tariffRepository;
-    private final TariffAuditRepository tariffAuditRepository;
     private final ProductsServiceClient productsServiceClient;
     private final TariffMapper tariffMapper;
     private final LocalDateTimeService localDateTimeService;
@@ -62,18 +57,12 @@ public class TariffService {
         Revision<Long, TariffEntity> revision = tariffRepository.findLastChangeRevision(id).orElse(null);
         TariffEntity tariffEntity = revision != null ? revision.getEntity() : null;
         if (tariffEntity != null) {
-            LocalDateTime currentDate = localDateTimeService.getCurrentDate();
-            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber())).orElse(null);
-            if (tariffAuditEntity != null) {
-                tariffAuditEntity.setEndDate(currentDate);
-                tariffAuditRepository.save(tariffAuditEntity);
-            }
             TariffEntity prevTariffEntity = tariffMapper.copyEntity(tariffEntity);
             tariffEntity.setName(tariffRequest.getName() != null ? tariffRequest.getName() : tariffEntity.getName());
             tariffEntity.setDescription(tariffRequest.getDescription() != null ? tariffRequest.getDescription() : tariffEntity.getName());
             tariffEntity.setProduct(tariffRequest.getProduct());
             tariffEntity.setVersion(tariffEntity.getVersion() + 1);
-            tariffEntity.setStartDate(currentDate);
+            tariffEntity.setStartDate(localDateTimeService.getCurrentDate());
             tariffEntity = tariffRepository.save(tariffEntity);
 
             List<ProductNotification> productNotificationList = new LinkedList<>();
@@ -91,11 +80,6 @@ public class TariffService {
         Revision<Long, TariffEntity> revision = tariffRepository.findLastChangeRevision(id).orElse(null);
         TariffEntity tariffEntity = revision != null ? revision.getEntity() : null;
         if (tariffEntity != null) {
-            TariffAuditEntity tariffAuditEntity = tariffAuditRepository.findById(new TariffAuditId(revision.getEntity().getId(), revision.getRequiredRevisionNumber())).orElse(null);
-            if (tariffAuditEntity != null) {
-                tariffAuditEntity.setEndDate(localDateTimeService.getCurrentDate());
-                tariffAuditRepository.save(tariffAuditEntity);
-            }
             tariffRepository.deleteById(id);
 
             List<ProductNotification> productNotificationList = new LinkedList<>();
