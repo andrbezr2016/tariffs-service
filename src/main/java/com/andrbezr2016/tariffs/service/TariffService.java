@@ -14,7 +14,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -25,15 +25,14 @@ public class TariffService {
     private final TariffRepository tariffRepository;
     private final ProductsServiceClient productsServiceClient;
     private final TariffMapper tariffMapper;
+    private final CurrentDateService currentDateService;
 
     public Tariff getTariff(UUID id, Long version) {
         TariffEntity tariffEntity;
         if (version == null) {
             tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         } else {
-            TariffId tariffId = new TariffId();
-            tariffId.setId(id);
-            tariffId.setVersion(version);
+            TariffId tariffId = new TariffId(id, version);
             tariffEntity = tariffRepository.findById(tariffId).orElse(null);
         }
         return tariffMapper.toDto(tariffEntity);
@@ -43,7 +42,7 @@ public class TariffService {
     public Tariff createTariff(TariffRequest tariffRequest) {
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
-        tariffEntity.setStartDate(OffsetDateTime.now());
+        tariffEntity.setStartDate(LocalDateTime.now());
         tariffEntity.setVersion(0L);
         tariffEntity = tariffRepository.save(tariffEntity);
 
@@ -58,7 +57,7 @@ public class TariffService {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         TariffEntity newTariffEntity = null;
         if (isActiveTariff(tariffEntity)) {
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDateTime now = LocalDateTime.now();
             tariffEntity.setEndDate(now);
 
             newTariffEntity = tariffMapper.copyEntity(tariffEntity);
@@ -84,7 +83,7 @@ public class TariffService {
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
         if (isActiveTariff(tariffEntity)) {
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDateTime now = LocalDateTime.now();
             tariffEntity.setEndDate(now);
 
             TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
