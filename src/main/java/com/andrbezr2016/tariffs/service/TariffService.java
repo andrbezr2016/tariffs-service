@@ -1,12 +1,13 @@
 package com.andrbezr2016.tariffs.service;
 
 import com.andrbezr2016.tariffs.client.ProductsServiceClient;
-import com.andrbezr2016.tariffs.dto.ProductNotification;
 import com.andrbezr2016.tariffs.dto.Tariff;
 import com.andrbezr2016.tariffs.dto.TariffRequest;
+import com.andrbezr2016.tariffs.entity.ProductNotificationEntity;
 import com.andrbezr2016.tariffs.entity.TariffEntity;
 import com.andrbezr2016.tariffs.entity.TariffId;
 import com.andrbezr2016.tariffs.mapper.TariffMapper;
+import com.andrbezr2016.tariffs.repository.ProductNotificationRepository;
 import com.andrbezr2016.tariffs.repository.TariffRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import java.util.*;
 public class TariffService {
 
     private final TariffRepository tariffRepository;
+    private final ProductNotificationRepository productNotificationRepository;
     private final ProductsServiceClient productsServiceClient;
     private final TariffMapper tariffMapper;
     private final CurrentDateService currentDateService;
@@ -45,9 +47,9 @@ public class TariffService {
         tariffEntityList.add(tariffEntity);
         tariffRepository.saveAll(tariffEntityList);
 
-        List<ProductNotification> productNotificationList = new LinkedList<>();
-        addUpdateNotification(tariffEntity, productNotificationList);
-        sendNotificationToProductService(productNotificationList);
+        List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
+        addUpdateNotification(tariffEntity, productNotificationEntityList);
+        fillNotificationToProductService(productNotificationEntityList);
         return tariffMapper.toDto(tariffEntity);
     }
 
@@ -74,12 +76,12 @@ public class TariffService {
             tariffEntityList.add(newTariffEntity);
             tariffRepository.saveAll(tariffEntityList);
 
-            List<ProductNotification> productNotificationList = new LinkedList<>();
+            List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
             if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
-                addDeleteNotification(tariffEntity, productNotificationList);
+                addDeleteNotification(tariffEntity, productNotificationEntityList);
             }
-            addUpdateNotification(newTariffEntity, productNotificationList);
-            sendNotificationToProductService(productNotificationList);
+            addUpdateNotification(newTariffEntity, productNotificationEntityList);
+            fillNotificationToProductService(productNotificationEntityList);
 
             return tariffMapper.toDto(newTariffEntity);
         }
@@ -101,9 +103,9 @@ public class TariffService {
             newTariffEntity.setState(TariffEntity.State.DELETED);
             tariffRepository.saveAll(List.of(tariffEntity, newTariffEntity));
 
-            List<ProductNotification> productNotificationList = new LinkedList<>();
-            addDeleteNotification(newTariffEntity, productNotificationList);
-            sendNotificationToProductService(productNotificationList);
+            List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
+            addDeleteNotification(newTariffEntity, productNotificationEntityList);
+            fillNotificationToProductService(productNotificationEntityList);
         }
     }
 
@@ -140,28 +142,31 @@ public class TariffService {
         }
     }
 
-    private void addUpdateNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
+    private void addUpdateNotification(TariffEntity tariffEntity, List<ProductNotificationEntity> productNotificationList) {
         if (isNotificationNeeded(tariffEntity)) {
-            ProductNotification productNotification = new ProductNotification();
-            productNotification.setTariff(tariffEntity.getId());
-            productNotification.setTariffVersion(tariffEntity.getVersion());
-            productNotification.setProduct(tariffEntity.getProduct());
-            productNotificationList.add(productNotification);
+            ProductNotificationEntity productNotificationEntity = new ProductNotificationEntity();
+            productNotificationEntity.setId(UUID.randomUUID());
+            productNotificationEntity.setTariff(tariffEntity.getId());
+            productNotificationEntity.setTariffVersion(tariffEntity.getVersion());
+            productNotificationEntity.setProduct(tariffEntity.getProduct());
+            productNotificationEntity.setStartDate(currentDateService.getCurrentDate());
+            productNotificationList.add(productNotificationEntity);
         }
     }
 
-    private void addDeleteNotification(TariffEntity tariffEntity, List<ProductNotification> productNotificationList) {
+    private void addDeleteNotification(TariffEntity tariffEntity, List<ProductNotificationEntity> productNotificationList) {
         if (isNotificationNeeded(tariffEntity)) {
-            ProductNotification productNotification = new ProductNotification();
-            productNotification.setProduct(tariffEntity.getProduct());
-            productNotificationList.add(productNotification);
+            ProductNotificationEntity productNotificationEntity = new ProductNotificationEntity();
+            productNotificationEntity.setId(UUID.randomUUID());
+            productNotificationEntity.setProduct(tariffEntity.getProduct());
+            productNotificationList.add(productNotificationEntity);
+            productNotificationEntity.setStartDate(currentDateService.getCurrentDate());
         }
     }
 
-    private void sendNotificationToProductService(Collection<ProductNotification> productNotificationCollection) {
+    private void fillNotificationToProductService(Collection<ProductNotificationEntity> productNotificationCollection) {
         if (CollectionUtils.isNotEmpty(productNotificationCollection)) {
-            log.info("Send notification for products with ids: {}", productNotificationCollection.stream().map(ProductNotification::getProduct).toList());
-            productsServiceClient.syncTariff(productNotificationCollection);
+            productNotificationRepository.saveAll(productNotificationCollection);
         }
     }
 

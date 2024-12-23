@@ -9,3 +9,12 @@ CREATE TABLE IF NOT EXISTS tariffs (
     state varchar NOT NULL,
     PRIMARY KEY (id, version)
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id uuid NOT NULL PRIMARY KEY,
+    tariff uuid,
+    tariff_version bigint,
+    product uuid NOT NULL,
+    start_date timestamp NOT NULL,
+    end_date timestamp
+);
