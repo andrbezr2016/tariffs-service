@@ -30,6 +30,11 @@ public class NotificationJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         log.debug("Start {}", jobExecutionContext.getJobInstance());
+        execute();
+    }
+
+    @Transactional
+    public void execute() {
         Collection<ProductNotificationEntity> productNotificationEntityCollection = productNotificationRepository.findAllByEndDateIsNull();
         if (CollectionUtils.isNotEmpty(productNotificationEntityCollection)) {
             log.info("Send notification for products with ids: {}", productNotificationEntityCollection.stream().map(ProductNotificationEntity::getProduct).toList());
