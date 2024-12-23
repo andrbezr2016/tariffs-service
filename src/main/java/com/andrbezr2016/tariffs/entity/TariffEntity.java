@@ -19,9 +19,9 @@ public class TariffEntity {
     @Id
     @Column(name = "id", nullable = false)
     private UUID id;
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
     @Column(name = "end_date")
     private LocalDateTime endDate;
@@ -32,6 +32,11 @@ public class TariffEntity {
     @Id
     @Column(name = "version", nullable = false)
     private Long version;
-    @Column(name = "deleted")
-    private boolean deleted;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    private State state;
+
+    public enum State {
+        ACTIVE, INACTIVE, DELETED
+    }
 }

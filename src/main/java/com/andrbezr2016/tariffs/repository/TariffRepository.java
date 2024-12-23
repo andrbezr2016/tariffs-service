@@ -12,6 +12,9 @@ import java.util.UUID;
 @Repository
 public interface TariffRepository extends JpaRepository<TariffEntity, TariffId> {
 
-    @Query("FROM TariffEntity WHERE id = :id ORDER BY version DESC LIMIT 1")
+    @Query("FROM TariffEntity WHERE id = :id AND state = 'ACTIVE'")
     Optional<TariffEntity> findCurrentVersionById(UUID id);
+
+    @Query("FROM TariffEntity WHERE product = :product AND state <> 'INACTIVE'")
+    Optional<TariffEntity> findAllLastVersionsByProduct(UUID product);
 }

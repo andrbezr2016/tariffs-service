@@ -34,11 +34,16 @@ public class TariffService {
 
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
+        List<TariffEntity> tariffEntityList = new ArrayList<>();
+        updateRelatedTariff(tariffRequest, tariffEntityList);
+
         TariffEntity tariffEntity = tariffMapper.toEntity(tariffRequest);
         tariffEntity.setId(UUID.randomUUID());
         tariffEntity.setStartDate(currentDateService.getCurrentDate());
         tariffEntity.setVersion(0L);
-        tariffEntity = tariffRepository.save(tariffEntity);
+        tariffEntity.setState(TariffEntity.State.ACTIVE);
+        tariffEntityList.add(tariffEntity);
+        tariffRepository.saveAll(tariffEntityList);
 
         List<ProductNotification> productNotificationList = new LinkedList<>();
         addUpdateNotification(tariffEntity, productNotificationList);
@@ -49,19 +54,25 @@ public class TariffService {
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = findTariff(id);
-        TariffEntity newTariffEntity = null;
-        if (isActiveTariff(tariffEntity)) {
+        if (tariffEntity != null) {
+            List<TariffEntity> tariffEntityList = new ArrayList<>();
+            updateRelatedTariff(tariffRequest, tariffEntityList);
+
             LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
+            tariffEntity.setState(TariffEntity.State.INACTIVE);
+            tariffEntityList.add(tariffEntity);
 
-            newTariffEntity = tariffMapper.copyEntity(tariffEntity);
-            newTariffEntity.setName(tariffRequest.getName());
-            newTariffEntity.setDescription(tariffRequest.getDescription());
+            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+            newTariffEntity.setName(tariffRequest.getName() != null ? tariffRequest.getName() : newTariffEntity.getName());
+            newTariffEntity.setDescription(tariffRequest.getDescription() != null ? tariffRequest.getDescription() : newTariffEntity.getDescription());
             newTariffEntity.setProduct(tariffRequest.getProduct());
             newTariffEntity.setStartDate(now);
             newTariffEntity.setEndDate(null);
             newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
-            tariffRepository.saveAll(List.of(tariffEntity, newTariffEntity));
+            newTariffEntity.setState(TariffEntity.State.ACTIVE);
+            tariffEntityList.add(newTariffEntity);
+            tariffRepository.saveAll(tariffEntityList);
 
             List<ProductNotification> productNotificationList = new LinkedList<>();
             if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
@@ -69,22 +80,25 @@ public class TariffService {
             }
             addUpdateNotification(newTariffEntity, productNotificationList);
             sendNotificationToProductService(productNotificationList);
+
+            return tariffMapper.toDto(newTariffEntity);
         }
-        return tariffMapper.toDto(newTariffEntity);
+        return null;
     }
 
     @Transactional
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = findTariff(id);
-        if (isActiveTariff(tariffEntity)) {
+        if (tariffEntity != null) {
             LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
+            tariffEntity.setState(TariffEntity.State.INACTIVE);
 
             TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
             newTariffEntity.setStartDate(now);
             newTariffEntity.setEndDate(null);
             newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
-            newTariffEntity.setDeleted(true);
+            newTariffEntity.setState(TariffEntity.State.DELETED);
             tariffRepository.saveAll(List.of(tariffEntity, newTariffEntity));
 
             List<ProductNotification> productNotificationList = new LinkedList<>();
@@ -103,6 +117,26 @@ public class TariffService {
         } else {
             TariffId tariffId = new TariffId(id, version);
             return tariffRepository.findById(tariffId).orElse(null);
+        }
+    }
+
+    private void updateRelatedTariff(TariffRequest tariffRequest, List<TariffEntity> tariffEntityList) {
+        if (tariffRequest.getProduct() != null) {
+            TariffEntity tariffEntity = tariffRepository.findAllLastVersionsByProduct(tariffRequest.getProduct()).orElse(null);
+            if (tariffEntity != null) {
+                TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+
+                LocalDateTime now = currentDateService.getCurrentDate();
+                tariffEntity.setEndDate(now);
+                tariffEntity.setState(TariffEntity.State.INACTIVE);
+                tariffEntityList.add(tariffEntity);
+
+                newTariffEntity.setProduct(null);
+                newTariffEntity.setEndDate(null);
+                newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
+                newTariffEntity.setState(newTariffEntity.getState());
+                tariffEntityList.add(newTariffEntity);
+            }
         }
     }
 
@@ -133,9 +167,5 @@ public class TariffService {
 
     private boolean isNotificationNeeded(TariffEntity tariffEntity) {
         return tariffEntity != null && tariffEntity.getProduct() != null;
-    }
-
-    private boolean isActiveTariff(TariffEntity tariffEntity) {
-        return tariffEntity != null && !tariffEntity.isDeleted();
     }
 }
