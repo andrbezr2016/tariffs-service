@@ -45,95 +45,76 @@ class TariffControllerTest {
 
     @Test
     void getTariffByIdTest() throws Exception {
-        UUID id = UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106");
-        UUID product = UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857");
-        String name = "Tariff 1 Update 2";
-        LocalDateTime startDate = LocalDateTime.parse("2020-01-01T14:00:00.000");
-        long version = 2L;
-
         Tariff tariff = Tariff.builder()
-                .id(id)
-                .name(name)
-                .startDate(startDate)
-                .product(product)
-                .version(version)
+                .id(UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106"))
+                .name("Tariff 1 Update 2")
+                .startDate(LocalDateTime.parse("2020-01-01T14:00:00.000"))
+                .product(UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857"))
+                .version(2L)
                 .build();
 
-        mvc.perform(get(GET_TARIFF, id))
+        mvc.perform(get(GET_TARIFF, tariff.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(tariff)));
     }
 
     @Test
     void getTariffByIdAndVersionTest() throws Exception {
-        UUID id = UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106");
-        UUID product = UUID.fromString("284add3b-e6f2-45f6-8a5e-1dfbed6a1f40");
-        String name = "Tariff 1 Update 1";
-        LocalDateTime startDate = LocalDateTime.parse("2020-01-01T13:00:00.000");
-        LocalDateTime endDate = LocalDateTime.parse("2020-01-01T14:00:00.000");
-        long version = 1L;
-
         Tariff tariff = Tariff.builder()
-                .id(id)
-                .name(name)
-                .startDate(startDate)
-                .endDate(endDate)
-                .product(product)
-                .version(version)
+                .id(UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106"))
+                .name("Tariff 1 Update 1")
+                .startDate(LocalDateTime.parse("2020-01-01T13:00:00.000"))
+                .endDate(LocalDateTime.parse("2020-01-01T14:00:00.000"))
+                .product(UUID.fromString("284add3b-e6f2-45f6-8a5e-1dfbed6a1f40"))
+                .version(1L)
                 .build();
 
-        mvc.perform(get(GET_TARIFF, id).queryParam("version", Long.toString(version)))
+        mvc.perform(get(GET_TARIFF, tariff.getId()).queryParam("version", tariff.getVersion().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().json(objectMapper.writeValueAsString(tariff)));
     }
 
     @Test
     void createTariffTest() throws Exception {
-        UUID product = UUID.fromString("a3d47b07-0e09-4ea4-8f8c-17a72085473e");
-        String name = "Tariff 3 Create";
-        String description = "Tariff 3 description";
         long version = 0L;
 
         TariffRequest tariffRequest = TariffRequest.builder()
-                .name(name)
-                .description(description)
-                .product(product)
+                .name("Tariff 3 Create")
+                .description("Tariff 3 description")
+                .product(UUID.fromString("a3d47b07-0e09-4ea4-8f8c-17a72085473e"))
                 .build();
 
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(name))
+                .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
                 .andExpect(jsonPath("$.startDate").isNotEmpty())
                 .andExpect(jsonPath("$.endDate").isEmpty())
-                .andExpect(jsonPath("$.description").value(description))
-                .andExpect(jsonPath("$.product").value(product.toString()))
+                .andExpect(jsonPath("$.description").value(tariffRequest.getDescription()))
+                .andExpect(jsonPath("$.product").value(tariffRequest.getProduct().toString()))
                 .andExpect(jsonPath("$.version").value(version));
 
-        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(product);
+        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(tariffRequest.getProduct());
         assertNotNull(productNotificationEntityList);
         assertEquals(1, productNotificationEntityList.size());
     }
 
     @Test
     void createTariffForOccupiedProductTest() throws Exception {
-        UUID product = UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857");
-        String name = "Tariff 3 Create";
-        String description = "Tariff 3 description";
         long version = 0L;
 
         TariffRequest tariffRequest = TariffRequest.builder()
-                .name(name)
-                .description(description)
-                .product(product)
+                .name("Tariff 3 Create")
+                .description("Tariff 3 description")
+                .product(UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857"))
                 .build();
 
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(name))
+                .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
                 .andExpect(jsonPath("$.startDate").isNotEmpty())
                 .andExpect(jsonPath("$.endDate").isEmpty())
-                .andExpect(jsonPath("$.description").value(description))
-                .andExpect(jsonPath("$.product").value(product.toString()))
+                .andExpect(jsonPath("$.description").value(tariffRequest.getDescription()))
+                .andExpect(jsonPath("$.product").value(tariffRequest.getProduct().toString()))
                 .andExpect(jsonPath("$.version").value(version));
 
         TariffEntity updatedExistedTariffEntity = tariffRepository.findCurrentVersionById(UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106")).orElse(null);
@@ -150,7 +131,7 @@ class TariffControllerTest {
         assertNull(updatedExistedTariffEntity.getProduct());
         assertEquals(existedTariffEntity.getVersion() + 1, updatedExistedTariffEntity.getVersion());
 
-        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(product);
+        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(tariffRequest.getProduct());
         assertNotNull(productNotificationEntityList);
         assertEquals(1, productNotificationEntityList.size());
     }
@@ -158,21 +139,19 @@ class TariffControllerTest {
     @Test
     void updateTariffTest() throws Exception {
         UUID id = UUID.fromString("f13893a4-7951-4c69-8c77-d292ddb40737");
-        UUID product = UUID.fromString("21b66246-7b80-409f-957c-6e308ee72037");
-        String name = "Tariff 2 Update 2";
         long version = 2L;
 
         TariffRequest tariffRequest = TariffRequest.builder()
-                .name(name)
-                .product(product)
+                .name("Tariff 2 Update 2")
+                .product(UUID.fromString("21b66246-7b80-409f-957c-6e308ee72037"))
                 .build();
 
         mvc.perform(patch(UPDATE_TARIFF, id).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(name))
+                .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
                 .andExpect(jsonPath("$.startDate").isNotEmpty())
                 .andExpect(jsonPath("$.endDate").isEmpty())
-                .andExpect(jsonPath("$.product").value(product.toString()))
+                .andExpect(jsonPath("$.product").value(tariffRequest.getProduct().toString()))
                 .andExpect(jsonPath("$.version").value(version));
 
         TariffEntity updatedTariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
@@ -190,7 +169,7 @@ class TariffControllerTest {
         assertNotNull(updatedTariffEntity.getProduct());
         assertEquals(tariffEntity.getVersion() + 1, updatedTariffEntity.getVersion());
 
-        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(product);
+        List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(tariffRequest.getProduct());
         assertNotNull(productNotificationEntityList);
         assertEquals(1, productNotificationEntityList.size());
     }
