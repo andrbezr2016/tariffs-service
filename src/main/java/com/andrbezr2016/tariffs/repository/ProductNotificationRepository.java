@@ -13,4 +13,6 @@ public interface ProductNotificationRepository extends JpaRepository<ProductNoti
 
     @Query(value = "FROM ProductNotificationEntity WHERE endDate IS NULL ORDER BY startDate ASC")
     List<ProductNotificationEntity> findAllByEndDateIsNull();
+
+    List<ProductNotificationEntity> findAllByProduct(UUID product);
 }

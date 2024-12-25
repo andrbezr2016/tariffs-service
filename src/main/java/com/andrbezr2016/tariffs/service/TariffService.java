@@ -134,6 +134,7 @@ public class TariffService {
                 tariffEntityList.add(tariffEntity);
 
                 newTariffEntity.setProduct(null);
+                newTariffEntity.setStartDate(now);
                 newTariffEntity.setEndDate(null);
                 newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
                 newTariffEntity.setState(newTariffEntity.getState());
