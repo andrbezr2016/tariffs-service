@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -89,8 +87,6 @@ class TariffControllerTest {
                 .product(UUID.fromString("a3d47b07-0e09-4ea4-8f8c-17a72085473e"))
                 .build();
 
-        doReturn(Boolean.TRUE).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
-
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
@@ -114,8 +110,6 @@ class TariffControllerTest {
                 .description("Tariff 3 description")
                 .product(UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857"))
                 .build();
-
-        doReturn(Boolean.TRUE).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
 
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
@@ -154,8 +148,6 @@ class TariffControllerTest {
                 .name("Tariff 2 Update 2")
                 .product(UUID.fromString("21b66246-7b80-409f-957c-6e308ee72037"))
                 .build();
-
-        doReturn(Boolean.TRUE).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
 
         mvc.perform(patch(UPDATE_TARIFF, id).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())

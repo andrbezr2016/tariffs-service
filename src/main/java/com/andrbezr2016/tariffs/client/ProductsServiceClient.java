@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collection;
-import java.util.UUID;
 
 @Component
 public class ProductsServiceClient {
@@ -19,9 +18,5 @@ public class ProductsServiceClient {
 
     public void syncTariff(Collection<ProductNotification> productNotificationCollection) {
         restTemplate.postForObject("/product/syncTariff", productNotificationCollection, Void.class);
-    }
-
-    public Boolean checkProduct(UUID productId) {
-        return restTemplate.getForObject("/product/{id}/checkProduct", Boolean.class, productId);
     }
 }

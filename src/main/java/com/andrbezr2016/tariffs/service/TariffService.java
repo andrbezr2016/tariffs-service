@@ -1,19 +1,16 @@
 package com.andrbezr2016.tariffs.service;
 
-import com.andrbezr2016.tariffs.client.ProductsServiceClient;
 import com.andrbezr2016.tariffs.dto.Tariff;
 import com.andrbezr2016.tariffs.dto.TariffRequest;
 import com.andrbezr2016.tariffs.entity.ProductNotificationEntity;
 import com.andrbezr2016.tariffs.entity.TariffEntity;
 import com.andrbezr2016.tariffs.entity.TariffId;
-import com.andrbezr2016.tariffs.exception.TariffException;
 import com.andrbezr2016.tariffs.mapper.TariffMapper;
 import com.andrbezr2016.tariffs.repository.ProductNotificationRepository;
 import com.andrbezr2016.tariffs.repository.TariffRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +24,6 @@ public class TariffService {
 
     private final TariffRepository tariffRepository;
     private final ProductNotificationRepository productNotificationRepository;
-    private final ProductsServiceClient productsServiceClient;
     private final TariffMapper tariffMapper;
     private final CurrentDateService currentDateService;
 
@@ -38,8 +34,6 @@ public class TariffService {
 
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
-        checkProduct(tariffRequest);
-
         List<TariffEntity> tariffEntityList = new ArrayList<>();
         updateRelatedTariff(tariffRequest, tariffEntityList);
 
@@ -59,8 +53,6 @@ public class TariffService {
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
-        checkProduct(tariffRequest);
-
         TariffEntity tariffEntity = findTariff(id);
         if (tariffEntity != null) {
             List<TariffEntity> tariffEntityList = new ArrayList<>();
@@ -110,7 +102,7 @@ public class TariffService {
             tariffRepository.saveAll(List.of(tariffEntity, newTariffEntity));
 
             List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
-            addNotification(newTariffEntity, productNotificationEntityList, true);
+            addNotification(tariffEntity, productNotificationEntityList, true);
             fillNotificationToProductService(productNotificationEntityList);
         }
     }
@@ -170,11 +162,5 @@ public class TariffService {
 
     private boolean isNotificationNeeded(TariffEntity tariffEntity) {
         return tariffEntity != null && tariffEntity.getProduct() != null;
-    }
-
-    private void checkProduct(TariffRequest tariffRequest) {
-        if (tariffRequest.getProduct() != null && !Boolean.TRUE.equals(productsServiceClient.checkProduct(tariffRequest.getProduct()))) {
-            throw new TariffException(HttpStatus.NOT_FOUND, "Product with id: %s doesn't exist", tariffRequest.getProduct());
-        }
     }
 }
