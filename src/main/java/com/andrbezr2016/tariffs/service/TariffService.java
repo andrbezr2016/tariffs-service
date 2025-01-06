@@ -54,7 +54,7 @@ public class TariffService {
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
         TariffEntity tariffEntity = findTariff(id);
-        if (tariffEntity != null) {
+        if (isUpdateNeeded(tariffEntity, tariffRequest)) {
             List<TariffEntity> tariffEntityList = new ArrayList<>();
             updateRelatedTariff(tariffRequest, tariffEntityList);
 
@@ -64,8 +64,8 @@ public class TariffService {
             tariffEntityList.add(tariffEntity);
 
             TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
-            newTariffEntity.setName(tariffRequest.getName() != null ? tariffRequest.getName() : newTariffEntity.getName());
-            newTariffEntity.setDescription(tariffRequest.getDescription() != null ? tariffRequest.getDescription() : newTariffEntity.getDescription());
+            newTariffEntity.setName(tariffRequest.getName());
+            newTariffEntity.setDescription(tariffRequest.getDescription());
             newTariffEntity.setProduct(tariffRequest.getProduct());
             newTariffEntity.setStartDate(now);
             newTariffEntity.setEndDate(null);
@@ -83,7 +83,7 @@ public class TariffService {
 
             return tariffMapper.toDto(newTariffEntity);
         }
-        return null;
+        return tariffMapper.toDto(tariffEntity);
     }
 
     @Transactional
@@ -162,5 +162,12 @@ public class TariffService {
 
     private boolean isNotificationNeeded(TariffEntity tariffEntity) {
         return tariffEntity != null && tariffEntity.getProduct() != null;
+    }
+
+    private boolean isUpdateNeeded(TariffEntity tariffEntity, TariffRequest tariffRequest) {
+        return tariffEntity != null
+                && (!Objects.equals(tariffEntity.getName(), tariffRequest.getName())
+                || !Objects.equals(tariffEntity.getDescription(), tariffRequest.getDescription())
+                || !Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct()));
     }
 }
