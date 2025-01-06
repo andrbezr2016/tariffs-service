@@ -190,6 +190,6 @@ class TariffControllerTest {
 
         List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(product);
         assertNotNull(productNotificationEntityList);
-        assertEquals(1, productNotificationEntityList.size());
+        assertEquals(0, productNotificationEntityList.size());
     }
 }

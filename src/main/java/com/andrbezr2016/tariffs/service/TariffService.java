@@ -46,7 +46,7 @@ public class TariffService {
         tariffRepository.saveAll(tariffEntityList);
 
         List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
-        addNotification(tariffEntity, productNotificationEntityList, false);
+        addNotification(tariffEntity, productNotificationEntityList);
         fillNotificationToProductService(productNotificationEntityList);
         return tariffMapper.toDto(tariffEntity);
     }
@@ -75,10 +75,7 @@ public class TariffService {
             tariffRepository.saveAll(tariffEntityList);
 
             List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
-            if (!Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct())) {
-                addNotification(tariffEntity, productNotificationEntityList, true);
-            }
-            addNotification(newTariffEntity, productNotificationEntityList, false);
+            addNotification(newTariffEntity, productNotificationEntityList);
             fillNotificationToProductService(productNotificationEntityList);
 
             return tariffMapper.toDto(newTariffEntity);
@@ -100,10 +97,6 @@ public class TariffService {
             newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
             newTariffEntity.setState(TariffEntity.State.DELETED);
             tariffRepository.saveAll(List.of(tariffEntity, newTariffEntity));
-
-            List<ProductNotificationEntity> productNotificationEntityList = new LinkedList<>();
-            addNotification(tariffEntity, productNotificationEntityList, true);
-            fillNotificationToProductService(productNotificationEntityList);
         }
     }
 
@@ -141,7 +134,7 @@ public class TariffService {
         }
     }
 
-    private void addNotification(TariffEntity tariffEntity, List<ProductNotificationEntity> productNotificationList, boolean toClean) {
+    private void addNotification(TariffEntity tariffEntity, List<ProductNotificationEntity> productNotificationList) {
         if (isNotificationNeeded(tariffEntity)) {
             ProductNotificationEntity productNotificationEntity = new ProductNotificationEntity();
             productNotificationEntity.setId(UUID.randomUUID());
@@ -149,7 +142,6 @@ public class TariffService {
             productNotificationEntity.setTariffVersion(tariffEntity.getVersion());
             productNotificationEntity.setProduct(tariffEntity.getProduct());
             productNotificationEntity.setStartDate(currentDateService.getCurrentDate());
-            productNotificationEntity.setToClean(toClean);
             productNotificationList.add(productNotificationEntity);
         }
     }
