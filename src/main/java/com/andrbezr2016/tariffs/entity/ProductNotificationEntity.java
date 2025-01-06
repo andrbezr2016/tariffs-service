@@ -31,4 +31,6 @@ public class ProductNotificationEntity {
     private LocalDateTime startDate;
     @Column(name = "end_date")
     private LocalDateTime endDate;
+    @Column(name = "to_clean", nullable = false)
+    private boolean toClean;
 }

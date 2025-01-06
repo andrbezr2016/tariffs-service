@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     tariff_version bigint,
     product uuid NOT NULL,
     start_date timestamp NOT NULL,
-    end_date timestamp
+    end_date timestamp,
+    to_clean boolean NOT NULL
 );
