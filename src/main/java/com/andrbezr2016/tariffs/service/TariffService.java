@@ -1,5 +1,6 @@
 package com.andrbezr2016.tariffs.service;
 
+import com.andrbezr2016.tariffs.client.ProductsServiceClient;
 import com.andrbezr2016.tariffs.dto.Tariff;
 import com.andrbezr2016.tariffs.dto.TariffRequest;
 import com.andrbezr2016.tariffs.entity.ProductNotificationEntity;
@@ -11,8 +12,10 @@ import com.andrbezr2016.tariffs.repository.TariffRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -24,6 +27,7 @@ public class TariffService {
 
     private final TariffRepository tariffRepository;
     private final ProductNotificationRepository productNotificationRepository;
+    private final ProductsServiceClient productsServiceClient;
     private final TariffMapper tariffMapper;
     private final CurrentDateService currentDateService;
 
@@ -34,6 +38,8 @@ public class TariffService {
 
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
+        checkProduct(tariffRequest.getProduct());
+
         List<TariffEntity> tariffEntityList = new ArrayList<>();
         updateRelatedTariff(tariffRequest, tariffEntityList);
 
@@ -53,6 +59,8 @@ public class TariffService {
 
     @Transactional
     public Tariff updateTariff(UUID id, TariffRequest tariffRequest) {
+        checkProduct(tariffRequest.getProduct());
+
         TariffEntity tariffEntity = findTariff(id);
         if (isUpdateNeeded(tariffEntity, tariffRequest)) {
             List<TariffEntity> tariffEntityList = new ArrayList<>();
@@ -161,5 +169,11 @@ public class TariffService {
                 && (!Objects.equals(tariffEntity.getName(), tariffRequest.getName())
                 || !Objects.equals(tariffEntity.getDescription(), tariffRequest.getDescription())
                 || !Objects.equals(tariffEntity.getProduct(), tariffRequest.getProduct()));
+    }
+
+    private void checkProduct(UUID product) {
+        if (product != null && !productsServiceClient.checkProduct(product)) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, String.format("Product with id: %s doesn't exist", product));
+        }
     }
 }

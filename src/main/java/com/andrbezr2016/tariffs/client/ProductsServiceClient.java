@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collection;
+import java.util.UUID;
 
 @Component
 public class ProductsServiceClient {
@@ -14,6 +15,10 @@ public class ProductsServiceClient {
 
     public ProductsServiceClient(@Qualifier("productsServiceRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    public Boolean checkProduct(UUID product) {
+        return restTemplate.getForObject("/product/{id}/checkCurrentVersion", Boolean.class, product);
     }
 
     public void syncTariff(Collection<ProductNotification> productNotificationCollection) {
