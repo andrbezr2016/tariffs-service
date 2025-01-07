@@ -66,12 +66,13 @@ public class TariffService {
             List<TariffEntity> tariffEntityList = new ArrayList<>();
             updateRelatedTariff(tariffRequest, tariffEntityList);
 
+            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+
             LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
             tariffEntity.setState(TariffEntity.State.INACTIVE);
             tariffEntityList.add(tariffEntity);
 
-            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
             newTariffEntity.setName(tariffRequest.getName());
             newTariffEntity.setDescription(tariffRequest.getDescription());
             newTariffEntity.setProduct(tariffRequest.getProduct());
@@ -95,11 +96,12 @@ public class TariffService {
     public void deleteTariff(UUID id) {
         TariffEntity tariffEntity = findTariff(id);
         if (tariffEntity != null) {
+            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
+
             LocalDateTime now = currentDateService.getCurrentDate();
             tariffEntity.setEndDate(now);
             tariffEntity.setState(TariffEntity.State.INACTIVE);
 
-            TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
             newTariffEntity.setStartDate(now);
             newTariffEntity.setEndDate(null);
             newTariffEntity.setVersion(newTariffEntity.getVersion() + 1);
