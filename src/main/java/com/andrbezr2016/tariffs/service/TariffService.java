@@ -114,7 +114,7 @@ public class TariffService {
 
     private TariffEntity findTariff(UUID id, Long version) {
         if (version == null) {
-            return tariffRepository.findCurrentVersionById(id).orElse(null);
+            return tariffRepository.findActiveVersionById(id).orElse(null);
         } else {
             TariffId tariffId = new TariffId(id, version);
             return tariffRepository.findById(tariffId).orElse(null);
@@ -123,7 +123,7 @@ public class TariffService {
 
     private void updateRelatedTariff(TariffRequest tariffRequest, List<TariffEntity> tariffEntityList) {
         if (tariffRequest.getProduct() != null) {
-            TariffEntity tariffEntity = tariffRepository.findAllCurrentVersionsByProduct(tariffRequest.getProduct()).orElse(null);
+            TariffEntity tariffEntity = tariffRepository.findActiveVersionByProduct(tariffRequest.getProduct()).orElse(null);
             if (tariffEntity != null) {
                 TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
 

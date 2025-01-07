@@ -18,10 +18,10 @@ public interface TariffRepository extends JpaRepository<TariffEntity, TariffId> 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("FROM TariffEntity WHERE id = :id AND state = 'ACTIVE'")
-    Optional<TariffEntity> findCurrentVersionById(UUID id);
+    Optional<TariffEntity> findActiveVersionById(UUID id);
 
     @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("FROM TariffEntity WHERE product = :product AND state = 'ACTIVE'")
-    Optional<TariffEntity> findAllCurrentVersionsByProduct(UUID product);
+    Optional<TariffEntity> findActiveVersionByProduct(UUID product);
 }
