@@ -115,7 +115,7 @@ public class TariffService {
 
     private void updateRelatedTariff(TariffRequest tariffRequest, List<TariffEntity> tariffEntityList) {
         if (tariffRequest.getProduct() != null) {
-            TariffEntity tariffEntity = tariffRepository.findAllLastVersionsByProduct(tariffRequest.getProduct()).orElse(null);
+            TariffEntity tariffEntity = tariffRepository.findAllCurrentVersionsByProduct(tariffRequest.getProduct()).orElse(null);
             if (tariffEntity != null) {
                 TariffEntity newTariffEntity = tariffMapper.copyEntity(tariffEntity);
 
