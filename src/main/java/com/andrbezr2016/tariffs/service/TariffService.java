@@ -36,6 +36,11 @@ public class TariffService {
         return tariffMapper.toDto(tariffEntity);
     }
 
+    public Collection<Tariff> getTariffsByProduct(UUID product) {
+        List<TariffEntity> tariffEntityList = tariffRepository.findAllVersionsByProduct(product);
+        return tariffMapper.toDtoCollection(tariffEntityList);
+    }
+
     @Transactional
     public Tariff createTariff(TariffRequest tariffRequest) {
         checkProduct(tariffRequest.getProduct());

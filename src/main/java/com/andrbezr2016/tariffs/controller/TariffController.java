@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.UUID;
 
 @Slf4j
@@ -21,6 +22,12 @@ public class TariffController {
     public Tariff getTariff(@PathVariable("id") UUID id, @RequestParam(value = "version", required = false) Long version) {
         log.info("Get tariff by id: {} and version: {}", id, version);
         return tariffService.getTariff(id, version);
+    }
+
+    @GetMapping("/byProduct/{product}")
+    public Collection<Tariff> getTariffsByProduct(@PathVariable("product") UUID product) {
+        log.info("Get tariffs by product: {}", product);
+        return tariffService.getTariffsByProduct(product);
     }
 
     @PostMapping("/create")
