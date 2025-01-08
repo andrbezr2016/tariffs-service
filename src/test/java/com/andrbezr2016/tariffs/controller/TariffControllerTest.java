@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -87,6 +89,8 @@ class TariffControllerTest {
                 .product(UUID.fromString("a3d47b07-0e09-4ea4-8f8c-17a72085473e"))
                 .build();
 
+        doReturn(true).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
+
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
@@ -111,6 +115,8 @@ class TariffControllerTest {
                 .product(UUID.fromString("5c50cc6c-8600-48a3-acf8-a83298035857"))
                 .build();
 
+        doReturn(true).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
+
         mvc.perform(post(CREATE_TARIFF).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
@@ -120,7 +126,7 @@ class TariffControllerTest {
                 .andExpect(jsonPath("$.product").value(tariffRequest.getProduct().toString()))
                 .andExpect(jsonPath("$.version").value(version));
 
-        TariffEntity updatedExistedTariffEntity = tariffRepository.findCurrentVersionById(UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106")).orElse(null);
+        TariffEntity updatedExistedTariffEntity = tariffRepository.findActiveVersionById(UUID.fromString("548ea2e0-bcef-4e12-b933-803a4de50106")).orElse(null);
         assertNotNull(updatedExistedTariffEntity);
         TariffEntity existedTariffEntity = tariffRepository.findById(new TariffId(updatedExistedTariffEntity.getId(), updatedExistedTariffEntity.getVersion() - 1)).orElse(null);
         assertNotNull(existedTariffEntity);
@@ -149,6 +155,8 @@ class TariffControllerTest {
                 .product(UUID.fromString("21b66246-7b80-409f-957c-6e308ee72037"))
                 .build();
 
+        doReturn(true).when(productsServiceClient).checkProduct(eq(tariffRequest.getProduct()));
+
         mvc.perform(patch(UPDATE_TARIFF, id).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(tariffRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(tariffRequest.getName()))
@@ -157,7 +165,7 @@ class TariffControllerTest {
                 .andExpect(jsonPath("$.product").value(tariffRequest.getProduct().toString()))
                 .andExpect(jsonPath("$.version").value(version));
 
-        TariffEntity updatedTariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        TariffEntity updatedTariffEntity = tariffRepository.findActiveVersionById(id).orElse(null);
         assertNotNull(updatedTariffEntity);
         TariffEntity tariffEntity = tariffRepository.findById(new TariffId(updatedTariffEntity.getId(), updatedTariffEntity.getVersion() - 1)).orElse(null);
         assertNotNull(tariffEntity);
@@ -185,7 +193,7 @@ class TariffControllerTest {
         mvc.perform(delete(DELETE_TARIFF, id))
                 .andExpect(status().isOk());
 
-        TariffEntity deletedTariffEntity = tariffRepository.findCurrentVersionById(id).orElse(null);
+        TariffEntity deletedTariffEntity = tariffRepository.findActiveVersionById(id).orElse(null);
         assertNull(deletedTariffEntity);
 
         List<ProductNotificationEntity> productNotificationEntityList = productNotificationRepository.findAllByProduct(product);
